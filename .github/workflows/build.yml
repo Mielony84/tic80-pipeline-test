@@ -1,49 +1,46 @@
-name: Build TIC-80 (Linux x86_64)
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-jobs:
-  build-linux:
+  release:
+    needs: build-linux
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - name: Download TIC-80 artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: tic80-linux-x86_64
+        path: release/
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y \
-          build-essential \
-          cmake \
-          libsdl2-dev \
-          libreadline-dev \
-          libcurl4-openssl-dev \
-          libgtk-3-dev \
-          libgles2-mesa-dev \
-          liblua5.3-dev \
-          zlib1g-dev
-
-    - name: Clone TIC-80
+    - name: Clone TIC-80 to extract version
       run: |
         git clone https://github.com/nesbox/TIC-80.git
         cd TIC-80
         git submodule update --init --recursive
 
-    - name: Build TIC-80
+    - name: Extract TIC-80 version and commit
+      id: meta
       run: |
         cd TIC-80
-        mkdir -p build
-        cd build
-        cmake ..
-        make -j$(nproc)
+        VERSION=$(grep -oP 'PROJECT_VERSION "\K[^"]+' CMakeLists.txt)
+        COMMIT=$(git rev-parse --short HEAD)
+        TAG="tic80-${VERSION}-${COMMIT}"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "commit=$COMMIT" >> $GITHUB_OUTPUT
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-    - name: Upload TIC-80 binary
-      uses: actions/upload-artifact@v4
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
       with:
-        name: tic80-linux-x86_64
-        path: TIC-80/build/bin/tic80
+        tag_name: ${{ steps.meta.outputs.tag }}
+        name: TIC-80 ${{ steps.meta.outputs.tag }}
+        body: |
+          Automated TIC-80 build for Linux (x86_64)
+          Upstream version: ${{ steps.meta.outputs.version }}
+          Commit: ${{ steps.meta.outputs.commit }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload binary to release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: release/**
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
