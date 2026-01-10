@@ -59,32 +59,14 @@ jobs:
         name: tic80-linux-x86_64
         path: release/
 
-    - name: Clone TIC-80 to extract version
-      run: |
-        git clone https://github.com/nesbox/TIC-80.git
-        cd TIC-80
-        git submodule update --init --recursive
-
-    - name: Extract TIC-80 version and commit
-      id: meta
-      run: |
-        cd TIC-80
-        VERSION=$(grep -oP '#define TIC_VERSION "\K[^"]+' include/tic80_version.h)
-        COMMIT=$(git rev-parse --short HEAD)
-        TAG="tic80-${VERSION}-${COMMIT}"
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "commit=$COMMIT" >> $GITHUB_OUTPUT
-        echo "tag=$TAG" >> $GITHUB_OUTPUT
-
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ steps.meta.outputs.tag }}
-        name: TIC-80 ${{ steps.meta.outputs.tag }}
+        tag_name: test-version-${{ github.run_number }}
+        name: TIC-80 test version ${{ github.run_number }}
         body: |
-          Automated TIC-80 build for Linux (x86_64)
-          Upstream version: ${{ steps.meta.outputs.version }}
-          Commit: ${{ steps.meta.outputs.commit }}
+          Automated test build of TIC-80 for Linux (x86_64).
+          Test build number: ${{ github.run_number }}.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
