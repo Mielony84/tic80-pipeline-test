@@ -71,11 +71,3 @@ jobs:
         files: release/**
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-    - name: Upload binary to release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: release/**
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
