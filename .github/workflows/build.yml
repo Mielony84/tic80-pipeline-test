@@ -1,0 +1,25 @@
+name: First Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build simple project
+        run: |
+          echo "int main(){return 0;}" > main.c
+          gcc main.c -o hello
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-binary
+          path: hello
