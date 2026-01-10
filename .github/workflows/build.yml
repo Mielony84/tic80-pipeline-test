@@ -1,25 +1,49 @@
-name: First Pipeline
+name: Build TIC-80 (Linux x86_64)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Build simple project
-        run: |
-          echo "int main(){return 0;}" > main.c
-          gcc main.c -o hello
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y \
+          build-essential \
+          cmake \
+          libsdl2-dev \
+          libreadline-dev \
+          libcurl4-openssl-dev \
+          libgtk-3-dev \
+          libgles2-mesa-dev \
+          liblua5.3-dev \
+          zlib1g-dev
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: hello-binary
-          path: hello
+    - name: Clone TIC-80
+      run: |
+        git clone https://github.com/nesbox/TIC-80.git
+        cd TIC-80
+        git submodule update --init --recursive
+
+    - name: Build TIC-80
+      run: |
+        cd TIC-80
+        mkdir build
+        cd build
+        cmake ..
+        make -j$(nproc)
+
+    - name: Upload TIC-80 binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: tic80-linux-x86_64
+        path: TIC-80/build/bin/tic80
