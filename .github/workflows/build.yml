@@ -37,7 +37,7 @@ jobs:
     - name: Build TIC-80
       run: |
         cd TIC-80
-        mkdir build
+        mkdir -p build
         cd build
         cmake ..
         make -j$(nproc)
