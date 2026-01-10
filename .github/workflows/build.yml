@@ -69,7 +69,7 @@ jobs:
       id: meta
       run: |
         cd TIC-80
-        VERSION=$(grep -oP 'PROJECT_VERSION "\K[^"]+' CMakeLists.txt)
+        VERSION=$(grep -oP '#define TIC_VERSION "\K[^"]+' src/core/version.h)
         COMMIT=$(git rev-parse --short HEAD)
         TAG="tic80-${VERSION}-${COMMIT}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
