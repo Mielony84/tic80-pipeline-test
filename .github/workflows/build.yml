@@ -60,7 +60,7 @@ jobs:
         name: tic80-linux-x86_64
         path: release/
 
-    - name: Create GitHub Release
+    - name: Create GitHub Release with binary
       uses: softprops/action-gh-release@v2
       with:
         tag_name: test-version-${{ github.run_number }}
@@ -68,8 +68,10 @@ jobs:
         body: |
           Automated test build of TIC-80 for Linux (x86_64).
           Test build number: ${{ github.run_number }}.
+        files: release/**
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
     - name: Upload binary to release
       uses: softprops/action-gh-release@v2
