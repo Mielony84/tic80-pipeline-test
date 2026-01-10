@@ -1,9 +1,10 @@
 name: Build TIC-80 (Linux x86_64)
 
+permissions:
+  contents: write
+
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
     branches: [ "main" ]
 
 jobs:
