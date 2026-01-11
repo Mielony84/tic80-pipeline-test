@@ -66,6 +66,14 @@ jobs:
         cd TIC-80
         git submodule update --init --recursive
 
+    - name: Patch TIC-80 CMakeLists to disable naett for ARM64
+      run: |
+        cd TIC-80
+        echo "Patching CMakeLists.txt to disable naett on ARM64..."
+        sed -i 's/add_subdirectory(vendor\/naett)/# add_subdirectory(vendor\/naett) (disabled for ARM64 cross-build)/' CMakeLists.txt
+        echo "Result around naett:"
+        grep -n "naett" CMakeLists.txt || true
+
     - name: Build TIC-80 (Linux ARM64)
       run: |
         cd TIC-80
@@ -73,10 +81,7 @@ jobs:
         cd build
         cmake .. \
           -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-          -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
-          -DBUILD_NAETT=OFF \
-          -DUSE_NAETT=OFF \
-          -DTIC80_BUILD_NAETT=OFF
+          -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
         make -j$(nproc)
 
     - name: Upload artifact (Linux ARM64)
@@ -145,7 +150,7 @@ jobs:
           Automated multi-arch build of TIC-80.
           Included artifacts:
           - Linux x86_64
-          - Linux ARM64
+          - Linux ARM64 (naett disabled for cross-build)
           - Windows x86_64
         files: release/**
       env:
