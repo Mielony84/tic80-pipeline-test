@@ -73,7 +73,8 @@ jobs:
         cd build
         cmake .. \
           -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-          -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+          -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+          -DBUILD_NAETT=OFF
         make -j$(nproc)
 
     - name: Upload artifact (Linux ARM64)
@@ -106,11 +107,21 @@ jobs:
         cmake .. -G "Visual Studio 17 2022" -A x64
         cmake --build . --config Release
 
+    - name: Debug Windows build output
+      shell: powershell
+      run: |
+        Write-Host "=== BUILD OUTPUT TREE ==="
+        Get-ChildItem -Recurse TIC-80/build
+
     - name: Upload artifact (Windows x86_64)
       uses: actions/upload-artifact@v4
       with:
         name: tic80-windows-x86_64
-        path: TIC-80/build/bin/Release/tic80.exe
+        path: |
+          TIC-80/build/bin/Release/tic80.exe
+          TIC-80/build/bin/tic80.exe
+          TIC-80/build/bin/tic80-sdl.exe
+        if-no-files-found: warn
 
 
   release:
