@@ -1,4 +1,4 @@
-name: Build TIC-80 (Linux x86_64)
+name: Build TIC-80 (Multi-Arch)
 
 permissions:
   contents: write
@@ -8,14 +8,31 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-linux:
+  build:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+            artifact: tic80-linux-x86_64
+            cmake_args: ""
+          - os: ubuntu-latest
+            arch: arm64
+            artifact: tic80-linux-arm64
+            cmake_args: "-DCMAKE_TOOLCHAIN_FILE=cmake/arm64-toolchain.cmake"
+          - os: windows-latest
+            arch: x86_64
+            artifact: tic80-windows-x86_64.exe
+            cmake_args: ""
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install dependencies
+    - name: Install dependencies (Linux)
+      if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt update
         sudo apt install -y \
@@ -27,7 +44,14 @@ jobs:
           libgtk-3-dev \
           libgles2-mesa-dev \
           liblua5.3-dev \
-          zlib1g-dev
+          zlib1g-dev \
+          gcc-aarch64-linux-gnu \
+          g++-aarch64-linux-gnu
+
+    - name: Install dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install mingw
 
     - name: Clone TIC-80
       run: |
@@ -40,34 +64,35 @@ jobs:
         cd TIC-80
         mkdir -p build
         cd build
-        cmake ..
-        make -j$(nproc)
+        cmake .. ${{ matrix.cmake_args }}
+        cmake --build . --config Release
 
-    - name: Upload TIC-80 binary
+    - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: tic80-linux-x86_64
-        path: TIC-80/build/bin/tic80
+        name: ${{ matrix.artifact }}
+        path: |
+          TIC-80/build/bin/tic80*
+          TIC-80/build/bin/Release/tic80*.exe
 
   release:
-    needs: build-linux
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
-    - name: Download TIC-80 artifact
+    - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
-        name: tic80-linux-x86_64
         path: release/
 
-    - name: Create GitHub Release with binary
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: test-version-${{ github.run_number }}
         name: TIC-80 test version ${{ github.run_number }}
         body: |
-          Automated test build of TIC-80 for Linux (x86_64).
-          Test build number: ${{ github.run_number }}.
+          Automated multi-arch build of TIC-80.
+          Includes Linux x86_64, Linux ARM64, and Windows x86_64.
         files: release/**
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
