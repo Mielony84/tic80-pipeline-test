@@ -11,8 +11,10 @@ jobs:
 
   linux-x86_64:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
@@ -31,12 +33,13 @@ jobs:
     - name: Build TIC-80 (Linux x86_64)
       run: |
         cd TIC-80
-        mkdir build
+        mkdir -p build
         cd build
         cmake ..
         make -j$(nproc)
 
-    - uses: actions/upload-artifact@v4
+    - name: Upload artifact (Linux x86_64)
+      uses: actions/upload-artifact@v4
       with:
         name: tic80-linux-x86_64
         path: TIC-80/build/bin/tic80
@@ -44,8 +47,10 @@ jobs:
 
   linux-arm64:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
@@ -61,17 +66,18 @@ jobs:
         cd TIC-80
         git submodule update --init --recursive
 
-    - name: Build TIC-80 (ARM64)
+    - name: Build TIC-80 (Linux ARM64)
       run: |
         cd TIC-80
-        mkdir build
+        mkdir -p build
         cd build
         cmake .. \
           -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
           -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
         make -j$(nproc)
 
-    - uses: actions/upload-artifact@v4
+    - name: Upload artifact (Linux ARM64)
+      uses: actions/upload-artifact@v4
       with:
         name: tic80-linux-arm64
         path: TIC-80/build/bin/tic80
@@ -79,8 +85,10 @@ jobs:
 
   windows-x86_64:
     runs-on: windows-latest
+
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Clone TIC-80
       shell: powershell
@@ -89,16 +97,17 @@ jobs:
         cd TIC-80
         git submodule update --init --recursive
 
-    - name: Build TIC-80 (Windows)
+    - name: Build TIC-80 (Windows x86_64)
       shell: powershell
       run: |
         cd TIC-80
-        mkdir build
+        if (!(Test-Path build)) { mkdir build }
         cd build
         cmake .. -G "Visual Studio 17 2022" -A x64
         cmake --build . --config Release
 
-    - uses: actions/upload-artifact@v4
+    - name: Upload artifact (Windows x86_64)
+      uses: actions/upload-artifact@v4
       with:
         name: tic80-windows-x86_64
         path: TIC-80/build/bin/Release/tic80.exe
@@ -107,17 +116,21 @@ jobs:
   release:
     needs: [linux-x86_64, linux-arm64, windows-x86_64]
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/download-artifact@v4
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
       with:
         path: release/
 
-    - uses: softprops/action-gh-release@v2
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: test-version-${{ github.run_number }}
         name: TIC-80 test version ${{ github.run_number }}
         body: |
-          Multi-arch build:
+          Automated multi-arch build of TIC-80.
+          Included artifacts:
           - Linux x86_64
           - Linux ARM64
           - Windows x86_64
