@@ -74,7 +74,9 @@ jobs:
         cmake .. \
           -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
           -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
-          -DBUILD_NAETT=OFF
+          -DBUILD_NAETT=OFF \
+          -DUSE_NAETT=OFF \
+          -DTIC80_BUILD_NAETT=OFF
         make -j$(nproc)
 
     - name: Upload artifact (Linux ARM64)
