@@ -42,12 +42,15 @@ jobs:
       run: |
         cd TIC-80/build/bin
         tar -czf tic80-linux-x86_64.tar.gz tic80
+        sha256sum tic80-linux-x86_64.tar.gz > tic80-linux-x86_64.sha256
 
     - name: Upload artifact (Linux x86_64)
       uses: actions/upload-artifact@v4
       with:
         name: tic80-linux-x86_64
-        path: TIC-80/build/bin/tic80-linux-x86_64.tar.gz
+        path: |
+          TIC-80/build/bin/tic80-linux-x86_64.tar.gz
+          TIC-80/build/bin/tic80-linux-x86_64.sha256
 
 
   windows-x86_64:
@@ -86,12 +89,15 @@ jobs:
         $exe = Get-ChildItem -Recurse -Filter "tic80*.exe" | Select-Object -First 1
         if ($exe -eq $null) { Write-Error "No tic80.exe found"; exit 1 }
         Compress-Archive -Path $exe.FullName -DestinationPath tic80-windows-x86_64.zip
+        certutil -hashfile tic80-windows-x86_64.zip SHA256 > tic80-windows-x86_64.sha256
 
     - name: Upload artifact (Windows x86_64)
       uses: actions/upload-artifact@v4
       with:
         name: tic80-windows-x86_64
-        path: TIC-80/build/bin/tic80-windows-x86_64.zip
+        path: |
+          TIC-80/build/bin/tic80-windows-x86_64.zip
+          TIC-80/build/bin/tic80-windows-x86_64.sha256
         if-no-files-found: warn
 
 
@@ -110,11 +116,7 @@ jobs:
       with:
         tag_name: test-version-${{ github.run_number }}
         name: TIC-80 test version ${{ github.run_number }}
-        body: |
-          Automated multi-arch build of TIC-80.
-          Included artifacts:
-          - Linux x86_64 (.tar.gz)
-          - Windows x86_64 (.zip)
+        generate_release_notes: true
         files: release/**
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
