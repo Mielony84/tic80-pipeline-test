@@ -1,4 +1,4 @@
-name: Build TIC-80 (Multi-Arch)
+name: Build TIC-80 (Linux + Windows)
 
 permissions:
   contents: write
@@ -38,64 +38,16 @@ jobs:
         cmake ..
         make -j$(nproc)
 
+    - name: Package (Linux x86_64)
+      run: |
+        cd TIC-80/build/bin
+        tar -czf tic80-linux-x86_64.tar.gz tic80
+
     - name: Upload artifact (Linux x86_64)
       uses: actions/upload-artifact@v4
       with:
         name: tic80-linux-x86_64
-        path: TIC-80/build/bin/tic80
-
-
-  linux-arm64:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y \
-          cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-          libsdl2-dev libreadline-dev libcurl4-openssl-dev \
-          libgtk-3-dev libgles2-mesa-dev liblua5.3-dev zlib1g-dev
-
-    - name: Clone TIC-80
-      run: |
-        git clone https://github.com/nesbox/TIC-80.git
-        cd TIC-80
-        git submodule update --init --recursive
-
-    - name: Show CMakeLists naett references (debug)
-      run: |
-        cd TIC-80
-        echo "=== Lines with 'naett' BEFORE patch ==="
-        grep -n "naett" CMakeLists.txt || echo "No naett occurrences found"
-
-    - name: Patch TIC-80 CMakeLists to disable naett for ARM64
-      run: |
-        cd TIC-80
-        echo "Patching CMakeLists.txt to disable naett on ARM64..."
-        # Skomentuj każdą linię zawierającą 'vendor/naett'
-        sed -i '/vendor\/naett/s/^/# DISABLED FOR ARM64: /' CMakeLists.txt
-        echo "=== Lines with 'naett' AFTER patch ==="
-        grep -n "naett" CMakeLists.txt || echo "No naett occurrences found"
-
-    - name: Build TIC-80 (Linux ARM64)
-      run: |
-        cd TIC-80
-        mkdir -p build
-        cd build
-        cmake .. \
-          -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-          -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
-        make -j$(nproc)
-
-    - name: Upload artifact (Linux ARM64)
-      uses: actions/upload-artifact@v4
-      with:
-        name: tic80-linux-arm64
-        path: TIC-80/build/bin/tic80
+        path: TIC-80/build/bin/tic80-linux-x86_64.tar.gz
 
 
   windows-x86_64:
@@ -127,19 +79,24 @@ jobs:
         Write-Host "=== BUILD OUTPUT TREE ==="
         Get-ChildItem -Recurse TIC-80/build
 
+    - name: Package (Windows x86_64)
+      shell: powershell
+      run: |
+        cd TIC-80/build/bin
+        $exe = Get-ChildItem -Recurse -Filter "tic80*.exe" | Select-Object -First 1
+        if ($exe -eq $null) { Write-Error "No tic80.exe found"; exit 1 }
+        Compress-Archive -Path $exe.FullName -DestinationPath tic80-windows-x86_64.zip
+
     - name: Upload artifact (Windows x86_64)
       uses: actions/upload-artifact@v4
       with:
         name: tic80-windows-x86_64
-        path: |
-          TIC-80/build/bin/Release/tic80.exe
-          TIC-80/build/bin/tic80.exe
-          TIC-80/build/bin/tic80-sdl.exe
+        path: TIC-80/build/bin/tic80-windows-x86_64.zip
         if-no-files-found: warn
 
 
   release:
-    needs: [linux-x86_64, linux-arm64, windows-x86_64]
+    needs: [linux-x86_64, windows-x86_64]
     runs-on: ubuntu-latest
 
     steps:
@@ -156,9 +113,8 @@ jobs:
         body: |
           Automated multi-arch build of TIC-80.
           Included artifacts:
-          - Linux x86_64
-          - Linux ARM64 (naett disabled in CMakeLists)
-          - Windows x86_64
+          - Linux x86_64 (.tar.gz)
+          - Windows x86_64 (.zip)
         files: release/**
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
