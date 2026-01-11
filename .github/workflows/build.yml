@@ -7,6 +7,9 @@ on:
   push:
     branches: [ "main" ]
 
+  schedule:
+    - cron: "0 12 * * *" # Runs every day at 12:00 UTC
+
 jobs:
 
   linux-x86_64:
