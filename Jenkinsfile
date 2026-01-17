@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'tic80-builder:latest'
+            args '-u root'
+        }
+    }
 
     environment {
         GITHUB_TOKEN = credentials('github-pat')
@@ -12,15 +17,9 @@ pipeline {
 
     stages {
 
-        stage('Prepare environment') {
+        stage('Checkout') {
             steps {
-                sh '''
-                sudo apt update
-                sudo apt install -y \
-                  build-essential cmake libsdl2-dev libreadline-dev \
-                  libcurl4-openssl-dev libgtk-3-dev libgles2-mesa-dev \
-                  liblua5.3-dev zlib1g-dev
-                '''
+                checkout scm
             }
         }
 
