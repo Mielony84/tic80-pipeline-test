@@ -14,19 +14,7 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    extensions: [[$class: 'CleanBeforeCheckout']],
-                    userRemoteConfigs: [[
-                        credentialsId: 'github-credentials', // Użyj istniejącego credentiala
-                        url: 'https://github.com/Mielony84/tic80-pipeline-test.git'
-                    ]]
-                ])
-            }
-        }
+        // STAGE CHECKOUT USUŃ - Jenkins już to zrobił przez SCM
 
         stage('Clone TIC-80') {
             steps {
